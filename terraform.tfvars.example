@@ -1,0 +1,35 @@
+# Scaleway organization ID
+scaleway_organization = "your_organization_id"
+
+# Scaleway token
+scaleway_token = "your_token"
+
+# Scaleway region
+scaleway_region = "par1"
+
+# Prefix of instance name for avoiding naming conflicts
+prefix = "your_prefix"
+
+# Instance type of server
+server_type = "DEV1-M"
+
+# Instance type of agent
+agent_type = "DEV1-S"
+
+# Number of agents
+agent_count = "1"
+
+# Cluster secret
+cluster_secret = "your_cluster_secret"
+
+# Email for your Cloudflare account
+cloudflare_email = "your_cloudflare_email"
+
+# Cloudflare token
+cloudflare_token = "your_cloudflare_token"
+
+# Cloudflare zone
+cloudflare_zone = "your_domain"
+
+# hostname
+cloudflare_hostname = "your_hostname"
