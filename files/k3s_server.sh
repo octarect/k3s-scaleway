@@ -1,6 +1,9 @@
 #!/bin/bash -x
 
-export INSTALL_K3S_EXEC="--cluster-secret ${cluster_secret} --kubelet-arg='address=0.0.0.0'"
+# Get public IP
+public_ip=$(curl -s inet-ip.info)
+
+export INSTALL_K3S_EXEC="--cluster-secret ${cluster_secret} --advertise-address $public_ip"
 
 if [ `command -v curl` ]; then
   curl -sfL https://get.k3s.io | sh -s -
