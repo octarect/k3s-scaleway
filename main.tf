@@ -44,6 +44,17 @@ resource "scaleway_server" "k3s_server" {
   dynamic_ip_required = true
   cloudinit           = "${data.template_file.k3s_server.rendered}"
   tags                = ["k3s"]
+
+  provisioner "remote-exec" {
+    inline = [
+      "mkdir -p /var/lib/rancher/k3s/server/manifests",
+    ]
+  }
+
+  provisioner "file" {
+    source      = "manifests/"
+    destination = "/var/lib/rancher/k3s/server/manifests"
+  }
 }
 
 resource "scaleway_server" "k3s_agent" {
