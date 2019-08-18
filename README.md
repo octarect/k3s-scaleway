@@ -15,7 +15,7 @@ It costs money to create instances on Scaleway, but compared to other services, 
 ### Copy and edit .tfvars file
 
 ```
-$ cp terraform.tfvars.example terraform.tfvars
+cp terraform.tfvars.example terraform.tfvars
 ```
 
 Edit terraform.tfvars.
@@ -23,11 +23,21 @@ Edit terraform.tfvars.
 ### Deploy
 
 ```
-$ terraform apply
+terraform apply
 ```
 
 ### Destroy
 
 ```
-$ terraform destroy
+terraform destroy
+```
+
+### Get kubeconfig
+
+After deploying cluster, you may want to get kubeconfig file. Execute the following command;
+
+> It may take a few minutes until the original file is generated on remote server.
+
+```
+make config
 ```
