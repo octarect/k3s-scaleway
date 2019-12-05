@@ -1,5 +1,7 @@
 # k3s-scaleway
 
+**NOTE**: I updated scaleway provider to v1.11, you can still use older version by cloning tag `scaleway-v1.10`.
+
 Build a [k3s](https://github.com/rancher/k3s) cluster on Scaleway by using Terraform.
 
 ## Requirements
@@ -12,7 +14,7 @@ It costs money to create instances on Scaleway, but compared to other services, 
 
 ## Usage
 
-### Copy and edit .tfvars file
+### 1. Copy and edit .tfvars file
 
 ```
 cp terraform.tfvars.example terraform.tfvars
@@ -20,13 +22,19 @@ cp terraform.tfvars.example terraform.tfvars
 
 Edit terraform.tfvars.
 
-### Deploy
+### 2. Init
+
+```
+terraform init
+```
+
+### 3. Deploy
 
 ```
 terraform apply
 ```
 
-### Destroy
+### 4. Destroy
 
 ```
 terraform destroy
