@@ -2,6 +2,7 @@ provider "scaleway" {
   organization = "${var.scaleway_organization}"
   token        = "${var.scaleway_token}"
   region       = "${var.scaleway_region}"
+  version      = "~> 1.10"
 }
 
 variable "scaleway_organization" {}
