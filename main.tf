@@ -1,7 +1,7 @@
 provider "scaleway" {
-  organization = "${var.scaleway_organization}"
-  token        = "${var.scaleway_token}"
-  region       = "${var.scaleway_region}"
+  organization = var.scaleway_organization
+  token        = var.scaleway_token
+  region       = var.scaleway_region
   version      = "~> 1.10"
 }
 
@@ -37,23 +37,23 @@ data "scaleway_image" "bionic" {
 #===============================================================================
 
 resource "scaleway_server" "k3s_server" {
-  image               = "${data.scaleway_image.bionic.id}"
-  type                = "${var.server_type}"
+  image               = data.scaleway_image.bionic.id
+  type                = var.server_type
   name                = "${var.prefix}-k3s-server"
-  security_group      = "${scaleway_security_group.k3s_common.id}"
+  security_group      = scaleway_security_group.k3s_common.id
   dynamic_ip_required = true
-  cloudinit           = "${data.template_file.k3s_server.rendered}"
+  cloudinit           = data.template_file.k3s_server.rendered
   tags                = ["k3s"]
 }
 
 resource "scaleway_server" "k3s_agent" {
-  count               = "${var.agent_count}"
-  image               = "${data.scaleway_image.bionic.id}"
-  type                = "${var.agent_type}"
+  count               = var.agent_count
+  image               = data.scaleway_image.bionic.id
+  type                = var.agent_type
   name                = "${var.prefix}-k3s-agent-${count.index}"
-  security_group      = "${scaleway_security_group.k3s_common.id}"
+  security_group      = scaleway_security_group.k3s_common.id
   dynamic_ip_required = true
-  cloudinit           = "${data.template_file.k3s_agent.rendered}"
+  cloudinit           = data.template_file.k3s_agent.rendered
   tags                = ["k3s"]
 }
 
@@ -67,7 +67,7 @@ resource "scaleway_security_group" "k3s_common" {
 }
 
 resource "scaleway_security_group_rule" "inbound_smtp_drop_25" {
-  security_group = "${scaleway_security_group.k3s_common.id}"
+  security_group = scaleway_security_group.k3s_common.id
   action         = "drop"
   direction      = "inbound"
   ip_range       = "0.0.0.0/0"
@@ -76,7 +76,7 @@ resource "scaleway_security_group_rule" "inbound_smtp_drop_25" {
 }
 
 resource "scaleway_security_group_rule" "inbound_smtp_drop_465" {
-  security_group = "${scaleway_security_group.k3s_common.id}"
+  security_group = scaleway_security_group.k3s_common.id
 
   action    = "drop"
   direction = "inbound"
@@ -86,7 +86,7 @@ resource "scaleway_security_group_rule" "inbound_smtp_drop_465" {
 }
 
 resource "scaleway_security_group_rule" "inbound_smtp_drop_587" {
-  security_group = "${scaleway_security_group.k3s_common.id}"
+  security_group = scaleway_security_group.k3s_common.id
 
   action    = "drop"
   direction = "inbound"
@@ -100,22 +100,22 @@ resource "scaleway_security_group_rule" "inbound_smtp_drop_587" {
 # Because we use private_ip as --node-ip(not floating ip), we use them in rules below.
 
 resource "scaleway_security_group_rule" "inbound_flannel_accept_server" {
-  security_group = "${scaleway_security_group.k3s_common.id}"
+  security_group = scaleway_security_group.k3s_common.id
 
   action    = "accept"
   direction = "inbound"
-  ip_range  = "${scaleway_server.k3s_server.private_ip}"
+  ip_range  = scaleway_server.k3s_server.private_ip
   protocol  = "UDP"
   port      = 8472
 }
 
 resource "scaleway_security_group_rule" "inbound_flannel_accept_agent" {
-  security_group = "${scaleway_security_group.k3s_common.id}"
+  security_group = scaleway_security_group.k3s_common.id
 
-  count     = "${var.agent_count}"
+  count     = var.agent_count
   action    = "accept"
   direction = "inbound"
-  ip_range  = "${element(scaleway_server.k3s_agent.*.private_ip, count.index)}"
+  ip_range  = element(scaleway_server.k3s_agent.*.private_ip, count.index)
   protocol  = "UDP"
   port      = 8472
 }
@@ -134,7 +134,7 @@ resource "null_resource" "sync_flannel_rules" {
 }
 
 resource "scaleway_security_group_rule" "inbound_flannel_drop_default" {
-  security_group = "${scaleway_security_group.k3s_common.id}"
+  security_group = scaleway_security_group.k3s_common.id
 
   action    = "drop"
   direction = "inbound"
@@ -150,18 +150,18 @@ resource "scaleway_security_group_rule" "inbound_flannel_drop_default" {
 #===============================================================================
 
 data "template_file" "k3s_server" {
-  template = "${file("files/k3s_server.sh")}"
+  template = file("files/k3s_server.sh")
 
   vars = {
-    cluster_secret = "${var.cluster_secret}"
+    cluster_secret = var.cluster_secret
   }
 }
 
 data "template_file" "k3s_agent" {
-  template = "${file("files/k3s_agent.sh")}"
+  template = file("files/k3s_agent.sh")
 
   vars = {
-    cluster_secret = "${var.cluster_secret}"
+    cluster_secret = var.cluster_secret
     server_url     = "https://${scaleway_server.k3s_server.public_ip}:6443"
   }
 }
@@ -175,9 +175,9 @@ output "k3s_server_url" {
 }
 
 output "k3s_server_ip" {
-  value = "${scaleway_server.k3s_server.public_ip}"
+  value = scaleway_server.k3s_server.public_ip
 }
 
 output "k3s_agent_ip" {
-  value = ["${scaleway_server.k3s_agent.*.public_ip}"]
+  value = [scaleway_server.k3s_agent.*.public_ip]
 }
