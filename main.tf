@@ -37,7 +37,6 @@ data "scaleway_image" "bionic" {
 #===============================================================================
 
 resource "scaleway_server" "k3s_server" {
-  count               = "1"
   image               = "${data.scaleway_image.bionic.id}"
   type                = "${var.server_type}"
   name                = "${var.prefix}-k3s-server"
@@ -122,10 +121,10 @@ resource "scaleway_security_group_rule" "inbound_flannel_accept_agent" {
 }
 
 locals {
-  scaleway_security_groups_flannel_ids = [
-    "scaleway_security_group_rule.inbound_flannel_accept_server.id",
-    "${scaleway_security_group_rule.inbound_flannel_accept_agent.*.id}",
-  ]
+  scaleway_security_groups_flannel_ids = concat(
+    [scaleway_security_group_rule.inbound_flannel_accept_server.id],
+    scaleway_security_group_rule.inbound_flannel_accept_agent[*].id,
+  )
 }
 
 resource "null_resource" "sync_flannel_rules" {
@@ -143,7 +142,7 @@ resource "scaleway_security_group_rule" "inbound_flannel_drop_default" {
   protocol  = "UDP"
   port      = 8472
 
-  depends_on = ["null_resource.sync_flannel_rules"]
+  depends_on = [null_resource.sync_flannel_rules]
 }
 
 #===============================================================================

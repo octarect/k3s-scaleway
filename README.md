@@ -4,7 +4,7 @@ Build a [k3s](https://github.com/rancher/k3s) cluster on Scaleway by using Terra
 
 ## Requirements
 
-- [Terrafrom](https://www.terraform.io/): Tested version is v0.11.x
+- [Terrafrom](https://www.terraform.io/): v0.12 or above
 - [Scaleway](https://www.scaleway.com/) account and provider: <= v1.12
 - [Cloudflare](https://www.cloudflare.com/) account
 
