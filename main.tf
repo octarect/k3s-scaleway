@@ -42,25 +42,27 @@ data "scaleway_image" "bionic" {
 # Instances
 #===============================================================================
 
-resource "scaleway_server" "k3s_server" {
-  image               = data.scaleway_image.bionic.id
-  type                = var.server_type
-  name                = "${var.prefix}-k3s-server"
-  security_group      = scaleway_security_group.k3s_common.id
-  dynamic_ip_required = true
-  cloudinit           = data.template_file.k3s_server.rendered
-  tags                = ["k3s"]
+resource "scaleway_instance_server" "k3s_server" {
+  image = data.scaleway_image.bionic.id
+  type  = var.server_type
+  name  = "${var.prefix}-k3s-server"
+  tags  = ["k3s"]
+
+  security_group_id = scaleway_security_group.k3s_common.id
+
+  cloud_init = data.template_file.k3s_server.rendered
 }
 
-resource "scaleway_server" "k3s_agent" {
-  count               = var.agent_count
-  image               = data.scaleway_image.bionic.id
-  type                = var.agent_type
-  name                = "${var.prefix}-k3s-agent-${count.index}"
-  security_group      = scaleway_security_group.k3s_common.id
-  dynamic_ip_required = true
-  cloudinit           = data.template_file.k3s_agent.rendered
-  tags                = ["k3s"]
+resource "scaleway_instance_server" "k3s_agent" {
+  count = var.agent_count
+  image = data.scaleway_image.bionic.id
+  type  = var.agent_type
+  name  = "${var.prefix}-k3s-agent-${count.index}"
+  tags  = ["k3s"]
+
+  security_group_id = scaleway_security_group.k3s_common.id
+
+  cloud_init = data.template_file.k3s_agent.rendered
 }
 
 #===============================================================================
@@ -110,7 +112,7 @@ resource "scaleway_security_group_rule" "inbound_flannel_accept_server" {
 
   action    = "accept"
   direction = "inbound"
-  ip_range  = scaleway_server.k3s_server.private_ip
+  ip_range  = scaleway_instance_server.k3s_server.private_ip
   protocol  = "UDP"
   port      = 8472
 }
@@ -121,7 +123,7 @@ resource "scaleway_security_group_rule" "inbound_flannel_accept_agent" {
   count     = var.agent_count
   action    = "accept"
   direction = "inbound"
-  ip_range  = element(scaleway_server.k3s_agent.*.private_ip, count.index)
+  ip_range  = element(scaleway_instance_server.k3s_agent.*.private_ip, count.index)
   protocol  = "UDP"
   port      = 8472
 }
@@ -168,7 +170,7 @@ data "template_file" "k3s_agent" {
 
   vars = {
     cluster_secret = var.cluster_secret
-    server_url     = "https://${scaleway_server.k3s_server.public_ip}:6443"
+    server_url     = "https://${scaleway_instance_server.k3s_server.public_ip}:6443"
   }
 }
 
@@ -181,9 +183,9 @@ output "k3s_server_url" {
 }
 
 output "k3s_server_ip" {
-  value = scaleway_server.k3s_server.public_ip
+  value = scaleway_instance_server.k3s_server.public_ip
 }
 
 output "k3s_agent_ip" {
-  value = [scaleway_server.k3s_agent.*.public_ip]
+  value = [scaleway_instance_server.k3s_agent.*.public_ip]
 }
