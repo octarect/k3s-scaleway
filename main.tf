@@ -1,15 +1,15 @@
 provider "scaleway" {
-  organization_id = var.scaleway_organization
+  organization_id = var.scaleway_organization_id
   access_key      = var.scaleway_access_key
-  secret_key      = var.scaleway_token
+  secret_key      = var.scaleway_secret_key
   region          = var.scaleway_region
   zone            = var.scaleway_zone
   version         = "~> 1.13"
 }
 
-variable "scaleway_organization" {}
+variable "scaleway_organization_id" {}
 variable "scaleway_access_key" {}
-variable "scaleway_token" {}
+variable "scaleway_secret_key" {}
 variable "scaleway_region" {
   default = "fr-par"
 }

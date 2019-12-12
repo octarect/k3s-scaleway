@@ -1,11 +1,17 @@
 # Scaleway organization ID
-scaleway_organization = "your_organization_id"
+scaleway_organization_id = "your_organization_id"
 
-# Scaleway token
-scaleway_token = "your_token"
+# Scaleway access key
+scaleway_access_key = "your_access_key"
+
+# Scaleway secret key
+scaleway_secret_key = "your_token"
 
 # Scaleway region
-scaleway_region = "par1"
+scaleway_region = "fr-par"
+
+# Scaleway zone
+scaleway_zone = "fr-par-1"
 
 # Prefix of instance name for avoiding naming conflicts
 prefix = "your_prefix"
