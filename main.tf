@@ -1,13 +1,19 @@
 provider "scaleway" {
-  organization = var.scaleway_organization
-  token        = var.scaleway_token
-  region       = var.scaleway_region
-  version      = "~> 1.10"
+  organization_id = var.scaleway_organization
+  secret_key      = var.scaleway_token
+  region          = var.scaleway_region
+  zone            = var.scaleway_zone
+  version         = "~> 1.10"
 }
 
 variable "scaleway_organization" {}
 variable "scaleway_token" {}
-variable "scaleway_region" {}
+variable "scaleway_region" {
+  default = "fr-par"
+}
+variable "scaleway_zone" {
+  default = "fr-par-1"
+}
 
 variable "prefix" {
   default = "cluster"
