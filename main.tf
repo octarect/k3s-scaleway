@@ -1,12 +1,14 @@
 provider "scaleway" {
   organization_id = var.scaleway_organization
+  access_key      = var.scaleway_access_key
   secret_key      = var.scaleway_token
   region          = var.scaleway_region
   zone            = var.scaleway_zone
-  version         = "~> 1.10"
+  version         = "~> 1.13"
 }
 
 variable "scaleway_organization" {}
+variable "scaleway_access_key" {}
 variable "scaleway_token" {}
 variable "scaleway_region" {
   default = "fr-par"
@@ -48,7 +50,9 @@ resource "scaleway_instance_server" "k3s_server" {
   name  = "${var.prefix}-k3s-server"
   tags  = ["k3s"]
 
-  security_group_id = scaleway_security_group.k3s_common.id
+  ip_id = scaleway_instance_ip.k3s_server.id
+
+  security_group_id = scaleway_instance_security_group.k3s.id
 
   cloud_init = data.template_file.k3s_server.rendered
 }
@@ -60,97 +64,78 @@ resource "scaleway_instance_server" "k3s_agent" {
   name  = "${var.prefix}-k3s-agent-${count.index}"
   tags  = ["k3s"]
 
-  security_group_id = scaleway_security_group.k3s_common.id
+  ip_id = scaleway_instance_ip.k3s_agent[count.index].id
+
+  security_group_id = scaleway_instance_security_group.k3s.id
 
   cloud_init = data.template_file.k3s_agent.rendered
+}
+
+#===============================================================================
+# IP
+#===============================================================================
+
+resource "scaleway_instance_ip" "k3s_server" {}
+
+resource "scaleway_instance_ip" "k3s_agent" {
+  count = var.agent_count
 }
 
 #===============================================================================
 # Security Group
 #===============================================================================
 
-resource "scaleway_security_group" "k3s_common" {
-  name        = "k3s-common"
-  description = "k3s rules"
-}
+resource "scaleway_instance_security_group" "k3s" {
+  name = "${var.prefix}-k3s"
 
-resource "scaleway_security_group_rule" "inbound_smtp_drop_25" {
-  security_group = scaleway_security_group.k3s_common.id
-  action         = "drop"
-  direction      = "inbound"
-  ip_range       = "0.0.0.0/0"
-  protocol       = "TCP"
-  port           = 25
-}
+  inbound_default_policy  = "accept"
+  outbound_default_policy = "accept"
 
-resource "scaleway_security_group_rule" "inbound_smtp_drop_465" {
-  security_group = scaleway_security_group.k3s_common.id
-
-  action    = "drop"
-  direction = "inbound"
-  ip_range  = "0.0.0.0/0"
-  protocol  = "TCP"
-  port      = 465
-}
-
-resource "scaleway_security_group_rule" "inbound_smtp_drop_587" {
-  security_group = scaleway_security_group.k3s_common.id
-
-  action    = "drop"
-  direction = "inbound"
-  ip_range  = "0.0.0.0/0"
-  protocol  = "TCP"
-  port      = 587
-}
-
-# [CUSTOM] Closed flannel port 
-# See https://github.com/rancher/k3s#open-ports--network-security
-# Because we use private_ip as --node-ip(not floating ip), we use them in rules below.
-
-resource "scaleway_security_group_rule" "inbound_flannel_accept_server" {
-  security_group = scaleway_security_group.k3s_common.id
-
-  action    = "accept"
-  direction = "inbound"
-  ip_range  = scaleway_instance_server.k3s_server.private_ip
-  protocol  = "UDP"
-  port      = 8472
-}
-
-resource "scaleway_security_group_rule" "inbound_flannel_accept_agent" {
-  security_group = scaleway_security_group.k3s_common.id
-
-  count     = var.agent_count
-  action    = "accept"
-  direction = "inbound"
-  ip_range  = element(scaleway_instance_server.k3s_agent.*.private_ip, count.index)
-  protocol  = "UDP"
-  port      = 8472
-}
-
-locals {
-  scaleway_security_groups_flannel_ids = concat(
-    [scaleway_security_group_rule.inbound_flannel_accept_server.id],
-    scaleway_security_group_rule.inbound_flannel_accept_agent[*].id,
-  )
-}
-
-resource "null_resource" "sync_flannel_rules" {
-  triggers = {
-    depends = "${join(",", local.scaleway_security_groups_flannel_ids)}"
+  inbound_rule {
+    action   = "drop"
+    protocol = "TCP"
+    port     = 25
+    ip_range = "0.0.0.0/0"
   }
-}
 
-resource "scaleway_security_group_rule" "inbound_flannel_drop_default" {
-  security_group = scaleway_security_group.k3s_common.id
+  inbound_rule {
+    action   = "drop"
+    protocol = "TCP"
+    port     = 465
+    ip_range = "0.0.0.0/0"
+  }
 
-  action    = "drop"
-  direction = "inbound"
-  ip_range  = "0.0.0.0/0"
-  protocol  = "UDP"
-  port      = 8472
+  inbound_rule {
+    action   = "drop"
+    protocol = "TCP"
+    port     = 587
+    ip_range = "0.0.0.0/0"
+  }
 
-  depends_on = [null_resource.sync_flannel_rules]
+  inbound_rule {
+    action   = "accept"
+    protocol = "UDP"
+    port     = 8472
+    ip       = scaleway_instance_ip.k3s_server.address
+  }
+
+  dynamic "inbound_rule" {
+    for_each = scaleway_instance_ip.k3s_agent.*.address
+
+    content {
+      action   = "accept"
+      protocol = "UDP"
+      port     = 8472
+      ip       = inbound_rule.value
+    }
+  }
+
+  inbound_rule {
+    action   = "drop"
+    protocol = "UDP"
+    port     = 8472
+    ip_range = "0.0.0.0/0"
+  }
 }
 
 #===============================================================================
