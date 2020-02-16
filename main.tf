@@ -25,12 +25,20 @@ variable "server_type" {
   default = "DEV1-S"
 }
 
+variable "server_data_size" {
+  default = 0
+}
+
 variable "agent_count" {
   default = "1"
 }
 
 variable "agent_type" {
   default = "DEV1-S"
+}
+
+variable "agent_data_size" {
+  default = 0
 }
 
 variable "cluster_secret" {}
@@ -55,6 +63,8 @@ resource "scaleway_instance_server" "k3s_server" {
   security_group_id = scaleway_instance_security_group.k3s.id
 
   cloud_init = data.template_file.k3s_server.rendered
+
+  additional_volume_ids = var.server_data_size != 0 ? [scaleway_instance_volume.k3s_server_data.id] : []
 }
 
 resource "scaleway_instance_server" "k3s_agent" {
@@ -69,6 +79,25 @@ resource "scaleway_instance_server" "k3s_agent" {
   security_group_id = scaleway_instance_security_group.k3s.id
 
   cloud_init = data.template_file.k3s_agent.rendered
+
+  additional_volume_ids = var.agent_data_size != 0 ? [scaleway_instance_volume.k3s_agent_data[count.index].id] : []
+}
+
+#===========================================================
+# Volume
+#===========================================================
+
+resource "scaleway_instance_volume" "k3s_server_data" {
+  type       = "b_ssd"
+  name       = "${var.prefix}-k3s-server-data"
+  size_in_gb = var.server_data_size
+}
+
+resource "scaleway_instance_volume" "k3s_agent_data" {
+  count      = var.agent_count
+  type       = "b_ssd"
+  name       = "${var.prefix}-k3s-agent-${count.index}-data"
+  size_in_gb = var.agent_data_size
 }
 
 #===========================================================
