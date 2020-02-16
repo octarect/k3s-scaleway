@@ -1,6 +1,9 @@
 # k3s-scaleway
 
 Build a [k3s](https://github.com/rancher/k3s) cluster on Scaleway by using Terraform.
+## Branch `heavy-armed` contains the following supports:
+
+- longhorn
 
 ## Requirements
 
