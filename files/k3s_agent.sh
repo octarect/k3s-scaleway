@@ -8,6 +8,12 @@ if [ -e /dev/sda ]; then
   mount -a
 fi
 
+# Longhorn requirements
+if [ ! `command -v iscsid` ]; then
+  apt -y install open-iscsi
+fi
+systemctl enable iscsid && systemctl start iscsid
+
 # Get public IP
 public_ip=$(curl -s inet-ip.info)
 
